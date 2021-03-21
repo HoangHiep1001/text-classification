@@ -1,8 +1,6 @@
 import pandas as pd
 
-def tranfer_csv(path):
-    data = pd.read_csv(path, sep="\t", encoding='utf-8')
-    data.to_csv('data.csv',sep=';', header=False)
-
 if __name__ == '__main__':
-    tranfer_csv("../../data/data-test.csv")
+    path_rs = "../../data/data_process.csv"
+    data = pd.read_csv(path_rs, sep=",", encoding='utf-8')
+    print(data['content'].head(5))

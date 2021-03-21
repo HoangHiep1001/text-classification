@@ -12,7 +12,7 @@ class MySentences(object):
              for line in codecs.open(os.path.join(self.dirname, fname), 'r', 'utf-8'):
                  yield line.split()
 
-dirData='data/data.txt'
+dirData='E:\Documents\20192\text-classification\data\data_process.csv'
 pathModelBin='model/vnw2v.bin'
 pathModelTxt='model/vnw2v.txt'
 
