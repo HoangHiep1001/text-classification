@@ -31,6 +31,7 @@ def text_preprocess(text):
     text = text.lower()
     # xóa các ký tự không cần thiết
     text = re.sub(r'[^\s\wáàảãạăắằẳẵặâấầẩẫậéèẻẽẹêếềểễệóòỏõọôốồổỗộơớờởỡợíìỉĩịúùủũụưứừửữựýỳỷỹỵđ_]', ' ', text)
+    text = re.sub(r'\d+', ' ', text).strip()
     text = re.sub(r'\s+', ' ', text).strip()
     return text
 
@@ -45,28 +46,12 @@ def remove_stopword(text):
             pre_text.append(word)
         text2 = ' '.join(pre_text)
     return text2
-def write_data_process(path,text):
-    with codecs.open(path,"w",encoding="utf8") as file:
-        file.write(text+"\n")
+
 if __name__ == '__main__':
-    path_in = '../../data/data.txt'
-    path_rs = "../../data/data_process.csv"
+    path_in = '../../data/data-raw/giao_duc.txt'
+    path_rs = "../../data/data_process/giao_duc.txt"
     data = read_file(path_in)
-    df = []
-    for text in data:
-        try:
-            content = text.split("==")[0];
-            label = text.split("==")[1];
-            a = text_preprocess(content)
-            b = text_preprocess(label)
-            df.append(a + "," + b)
-        except:
-            print("No data")
-    with open(path_rs, 'w', newline='',encoding='utf-8') as csvfile:
-        fieldnames = ['content', 'category']
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        writer.writeheader()
-        for str in df:
-            ct = str.split(",")[0]
-            lb = str.split(",")[1]
-            writer.writerow({'content':''+ct, 'category': ''+lb})
+    with codecs.open(path_rs,"w",encoding="utf8") as file:
+        for str in data:
+            str = text_preprocess(str)
+            file.write(str+"\n")
