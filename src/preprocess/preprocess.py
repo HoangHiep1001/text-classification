@@ -7,19 +7,23 @@ from src.preprocess import nlp_utils
 from src.utils.unicode import covert_unicode
 import csv
 
+
 def read_file(filePath):
     list = []
-    with codecs.open(filePath,"r",encoding="utf8") as file:
+    with codecs.open(filePath, "r", encoding="utf8") as file:
         a = file.readlines()
-        for i in a :
+        for i in a:
             list.append(i)
     return list
+
 
 def removeHtml(text):
     return re.sub(r'<[^>]*>', '', text)
 
+
 def unicodeConvert(text):
     return covert_unicode(text)
+
 
 def text_preprocess(text):
     text = unicodeConvert(text)
@@ -34,6 +38,7 @@ def text_preprocess(text):
     text = re.sub(r'\d+', ' ', text).strip()
     text = re.sub(r'\s+', ' ', text).strip()
     return text
+
 
 def remove_stopword(text):
     filename = '../../data/stopwords.csv'

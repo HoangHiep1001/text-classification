@@ -1,6 +1,7 @@
 from gensim.models import Word2Vec
 import pandas as pd
 import os
+
 # path data
 pathdata = '../../data/data_process/bat_dong_san.txt'
 pathModelBin = '../../model/w2v.bin'
@@ -37,4 +38,3 @@ if __name__ == '__main__':
     model.wv.save_word2vec_format(pathModelBin, fvocab=None, binary=True)
     model.wv.save_word2vec_format(pathModelTxt, fvocab=None, binary=False)
     model.wv.save("../../model/word.model")
-    print("\nTrain done saved to ./model folder.")
