@@ -41,9 +41,12 @@ def text_preprocess(text):
 
 
 def remove_stopword(text):
-    filename = '../../data/stopwords.csv'
-    data = pd.read_csv(filename, sep="\t", encoding='utf-8')
-    list_stopwords = data['stopwords']
+    filename = '../../data/stopwords.txt'
+    list_stopwords = []
+    with codecs.open(filename, "r", encoding="utf8") as file:
+        a = file.readlines()
+        for i in a:
+            list_stopwords.append(i.strip())
     pre_text = []
     words = text.split()
     for word in words:
@@ -53,8 +56,8 @@ def remove_stopword(text):
     return text2
 
 if __name__ == '__main__':
-    path_in = '../../data/data-raw/giao_duc.txt'
-    path_rs = "../../data/data_process/giao_duc.txt"
+    path_in = '../../data/data-raw/du_lich'
+    path_rs = "../../data/data_process/du_lich"
     data = read_file(path_in)
     with codecs.open(path_rs,"w",encoding="utf8") as file:
         for str in data:

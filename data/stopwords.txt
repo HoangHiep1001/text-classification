@@ -1,4 +1,3 @@
-stopwords
 mà_thôi
 tuy_có
 đâu_như
