@@ -1,6 +1,7 @@
 from gensim.models import Word2Vec
-import pandas as pd
 import os
+from sklearn.decomposition import PCA
+from matplotlib import pyplot
 
 # path data
 pathdata = '../../data/data_process/'
@@ -32,11 +33,13 @@ def read_data():
 if __name__ == '__main__':
     content, label = read_data()
     input_gensim = []
+
     for str in content:
         input_gensim.append(str.split())
 
-    model = Word2Vec(input_gensim, size=128, window=5, min_count=0, workers=4, sg=1,iter=5)
+    model = Word2Vec(input_gensim, size=200, window=5, min_count=1, workers=4, sg=1,iter=5)
 
+    # model = Word2Vec(input_gensim, min_count=1)
     model.wv.save_word2vec_format(pathModelBin, fvocab=None, binary=True)
     model.wv.save_word2vec_format(pathModelTxt, fvocab=None, binary=False)
     model.wv.save("../../model/word.model")

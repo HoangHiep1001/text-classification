@@ -56,8 +56,8 @@ def remove_stopword(text):
     return text2
 
 if __name__ == '__main__':
-    path_in = '../../data/data-raw/du_lich'
-    path_rs = "../../data/data_process/du_lich"
+    path_in = '../../data/data-raw/thoi_su_phap_luat'
+    path_rs = "../../data/data_process/thoi_su_phap_luat"
     data = read_file(path_in)
     with codecs.open(path_rs,"w",encoding="utf8") as file:
         for str in data:
