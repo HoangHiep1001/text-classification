@@ -7,8 +7,8 @@ pathModel = '../../model/word.model'
 model_embedding = word2vec.KeyedVectors.load(pathModel)
 
 word_labels = []
-max_seq = 200
-embedding_size = 128
+max_seq = 1500
+embedding_size = 250
 
 for word in model_embedding.vocab.keys():
     word_labels.append(word)
