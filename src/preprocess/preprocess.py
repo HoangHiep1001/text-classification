@@ -1,4 +1,5 @@
 import codecs
+import os
 import re
 import pandas as pd
 from pyvi import ViTokenizer
@@ -35,12 +36,14 @@ def text_preprocess(text):
     text = text.lower()
     # xóa các ký tự không cần thiết
     text = re.sub(r'[^\s\wáàảãạăắằẳẵặâấầẩẫậéèẻẽẹêếềểễệóòỏõọôốồổỗộơớờởỡợíìỉĩịúùủũụưứừửữựýỳỷỹỵđ_]', ' ', text)
+    text = re.sub(r'\b\w{1,2}\b', '', text).strip()
     text = re.sub(r'\d+', ' ', text).strip()
     text = re.sub(r'\s+', ' ', text).strip()
     return text
 
 
 def remove_stopword(text):
+    global text2
     filename = '../../data/stopwords.txt'
     list_stopwords = []
     with codecs.open(filename, "r", encoding="utf8") as file:
@@ -55,11 +58,25 @@ def remove_stopword(text):
         text2 = ' '.join(pre_text)
     return text2
 
+
 if __name__ == '__main__':
-    path_in = '../../data/data-raw/thoi_su_phap_luat'
-    path_rs = "../../data/data_process/thoi_su_phap_luat"
-    data = read_file(path_in)
-    with codecs.open(path_rs,"w",encoding="utf8") as file:
-        for str in data:
-            str = text_preprocess(str)
-            file.write(str+"\n")
+    s = []
+    s.append('game')
+    s.append('du_lich')
+    s.append('giao_duc')
+    s.append('kinh_doanh')
+    s.append('ngan_hang')
+    s.append('suc_khoe')
+    s.append('the_thao')
+    s.append('thoi_su_phap_luat')
+    for str1 in s:
+        path_in = '../../data/data-raw/' + str1
+        path_rs = "../../data/data_process/" + str1
+        data = read_file(path_in)
+        with codecs.open(path_rs, "w", encoding="utf8") as file:
+            for str in data:
+                str = text_preprocess(str)
+                if len(str) < 200:
+                    continue
+                file.write(str + "\n")
+        print("done " + path_rs)

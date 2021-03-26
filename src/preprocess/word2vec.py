@@ -9,14 +9,6 @@ pathModelBin = '../../model/w2v.bin'
 pathModelTxt = '../../model/w2v.txt'
 
 
-# def read_data():
-#     traindata = []
-#     sents = open(pathdata, 'r', encoding='utf-8').readlines()
-#     for sent in sents:
-#         traindata.append(sent.split(",")[0])
-#     return traindata
-
-
 def read_data():
     content = []
     label = []
@@ -37,9 +29,8 @@ if __name__ == '__main__':
     for str in content:
         input_gensim.append(str.split())
 
-    model = Word2Vec(input_gensim, size=200, window=5, min_count=1, workers=4, sg=1,iter=5)
+    model = Word2Vec(input_gensim, size=250, window=5, min_count=1, workers=4, sg=1, iter=5)
 
-    # model = Word2Vec(input_gensim, min_count=1)
     model.wv.save_word2vec_format(pathModelBin, fvocab=None, binary=True)
     model.wv.save_word2vec_format(pathModelTxt, fvocab=None, binary=False)
     model.wv.save("../../model/word.model")
