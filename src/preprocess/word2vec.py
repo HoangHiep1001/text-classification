@@ -1,3 +1,5 @@
+import random
+import numpy as np
 from gensim.models import Word2Vec
 import os
 from sklearn.decomposition import PCA
@@ -18,8 +20,15 @@ def read_data():
         for sent in sents:
             content.append(sent)
             label.append(filename)
+    l = len(content)
+    shutfle = list(range(l))
+    random.shuffle(shutfle)
+    train_data = np.array(content)
+    train_label = np.array(label)
+    train_data = train_data[shutfle]
+    train_label = train_label[shutfle]
 
-    return content, label
+    return content, train_label
 
 
 if __name__ == '__main__':
@@ -29,7 +38,7 @@ if __name__ == '__main__':
     for str in content:
         input_gensim.append(str.split())
 
-    model = Word2Vec(input_gensim, size=250, window=5, min_count=1, workers=4, sg=1, iter=5)
+    model = Word2Vec(input_gensim, size=250, window=5, min_count=1, workers=4, sg=1,iter=5)
 
     model.wv.save_word2vec_format(pathModelBin, fvocab=None, binary=True)
     model.wv.save_word2vec_format(pathModelTxt, fvocab=None, binary=False)
