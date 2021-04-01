@@ -1,20 +1,18 @@
+import multiprocessing
+import numpy as np
 import gensim.models.keyedvectors as word2vec
+from gensim.models import Word2Vec
+from gensim.models.deprecated.keyedvectors import KeyedVectors
 from matplotlib import pyplot
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 
-path_model = '../../model/word.model'
-model = word2vec.KeyedVectors.load(path_model)
-X = model[model.wv.vocab]
-pca = PCA(n_components=2)
-result = pca.fit_transform(X)
-pyplot.scatter(result[:, 0], result[:, 1])
-
-
-words = list(model.wv.vocab)
-for i, word in enumerate(words):
-	plt.annotate(word, xy=(result[i, 0], result[i, 1]))
-words = list(model.wv.vocab)
-for i, word in enumerate(words):
-	pyplot.annotate(word, xy=(result[i, 0], result[i, 1]))
-pyplot.show()
+if __name__ == '__main__':
+	model_ug_cbow = KeyedVectors.load('w2v_model_ug_cbow.word2vec')
+	model_ug_sg = KeyedVectors.load('w2v_model_ug_sg.word2vec')
+	embeddings_index = {}
+	for w in model_ug_cbow.wv.vocab.keys():
+		embeddings_index[w] = np.append(model_ug_cbow.wv[w], model_ug_sg.wv[w])
+	print('Found %s word vectors.' % len(embeddings_index))
+	print(embeddings_index)
+	np.append(model_ug_cbow.wv['công_chúa'], model_ug_sg.wv['công_chúa'])
