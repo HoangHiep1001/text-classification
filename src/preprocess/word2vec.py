@@ -28,7 +28,7 @@ def read_data():
     train_data = train_data[shutfle]
     train_label = train_label[shutfle]
 
-    return content, train_label
+    return train_data, train_label
 
 
 if __name__ == '__main__':

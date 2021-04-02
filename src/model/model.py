@@ -13,7 +13,7 @@ if __name__ == '__main__':
     train_data = np.array(train_data)
     le = preprocessing.LabelEncoder()
     # le.fit(['bat_dong_san','cong_nghe','dien_anh','du_lich','game','giao_duc','kinh_doanh','ngan_hang','suc_khoe','the_thao','thoi_su_phap_thuat'])
-    le.fit(['bat_dong_san','cong_nghe','dien_anh'])
+    le.fit(['bat_dong_san','dien_anh'])
     print(label)
     label_encode = le.fit_transform(label)
     print(label_encode)
@@ -32,7 +32,7 @@ from tensorflow.keras import layers
 from tensorflow import keras
 import tensorflow as tf
 
-sequence_length = 1500
+sequence_length = 400
 embedding_size = 250
 num_classes = 3
 filter_sizes = 3
@@ -51,7 +51,7 @@ from tensorflow.keras import layers
 from tensorflow import keras
 import tensorflow as tf
 
-sequence_length = 1500
+sequence_length = 400
 embedding_size = 250
 num_classes = 3
 filter_sizes = 3
@@ -63,7 +63,7 @@ dropout_rate = 0.5
 
 x_train = train_data.reshape(train_data.shape[0], sequence_length, embedding_size, 1).astype('float32')
 y_train = np.array(train_label)
-num_train = 30000
+num_train = 3000
 train_x = x_train[0:num_train]
 test_x = y_train[0:num_train]
 train_y = x_train[num_train:]
