@@ -30,4 +30,4 @@ def comment_embedding(content):
 
 
 if __name__ == '__main__':
-    print(comment_embedding('tổng công_ty cổ xuất nhập_khẩu xây_dựng việt_nam thông_báo_cáo_bạch niêm_yết phụ_lục sau bat_dong_san'))
+    print(comment_embedding('tổng công_ty cổ xuất nhập_khẩu xây_dựng việt_nam thông_báo_cáo_bạch niêm_yết phụ_lục sau bat_dong_san.txt'))
