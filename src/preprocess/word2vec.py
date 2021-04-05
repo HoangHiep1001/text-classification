@@ -52,9 +52,11 @@ def generate_model_w2v(data_folder):
         model.fit(X_train, y_train, batch, epochs)
         model.save(data_folder + sep + "predict_model.save")
     else:
-        model = load_model("predict_model.save")
+        model = load_model("../../data/data_dump/predict_model.save")
 
-    model.evaluate(X_test, y_test)
+    print(X_test[1])
+    result = model.predict(X_test[1])
+    print(result)
 
 
 if __name__ == '__main__':

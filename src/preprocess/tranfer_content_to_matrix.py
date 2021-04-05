@@ -1,16 +1,17 @@
+import gensim
 import gensim.models.keyedvectors as word2vec
 import numpy as np
 
 
-pathModel = '../../model/word.model'
+pathModel = '../../data/data_dump/word_model.save'
 
-model_embedding = word2vec.KeyedVectors.load(pathModel)
+model_embedding = gensim.models.Word2Vec.load(pathModel)
 
 word_labels = []
-max_seq = 400
-embedding_size = 250
+max_seq = 250
+embedding_size = 300
 
-for word in model_embedding.vocab.keys():
+for word in model_embedding.wv.vocab.keys():
     word_labels.append(word)
 
 

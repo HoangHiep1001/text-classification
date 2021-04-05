@@ -16,3 +16,4 @@ if __name__ == '__main__':
 	print('Found %s word vectors.' % len(embeddings_index))
 	print(embeddings_index)
 	np.append(model_ug_cbow.wv['công_chúa'], model_ug_sg.wv['công_chúa'])
+
