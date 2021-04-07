@@ -1,0 +1,4 @@
+- Sử dụng dropout
+- early stopping
+- thêm data
+- giảm bớt phức tạp model

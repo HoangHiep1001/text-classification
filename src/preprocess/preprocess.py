@@ -106,7 +106,7 @@ def loadData(data_folder):
             with open(data_folder + sep + folder + sep + file, 'r', encoding="utf-8") as f:
                 print("read file: " + data_folder + sep + folder + sep + file)
                 all_of_it = f.read()
-                sentences = all_of_it.split('\n')
+                sentences = all_of_it.split('.')
                 sentences = text_preprocessV2(sentences)
                 texts = texts + sentences
                 label = [folder for _ in sentences]

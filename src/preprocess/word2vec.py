@@ -1,4 +1,6 @@
 import pickle
+
+import keras
 from keras.models import Sequential, load_model
 from keras.layers import LSTM, Dense, Embedding
 import gensim
@@ -22,7 +24,6 @@ def generate_model_w2v(data_folder):
         word_model = gensim.models.Word2Vec.load(data_folder + sep + "word_model.save")
     # split in train and test
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, shuffle=True)
-
     # train Word2Vec model on our data
     if not os.path.exists(data_folder + sep + "word_model.save"):
         word_model = gensim.models.Word2Vec(texts, size=300, min_count=1, iter=10)
@@ -45,9 +46,10 @@ def generate_model_w2v(data_folder):
         model.add(LSTM(300, return_sequences=False))
         model.add(Dense(y.shape[1], activation="softmax"))
         model.summary()
-        model.compile(optimizer="adam", loss="categorical_crossentropy", metrics=['acc'])
+        opt = keras.optimizers.Adam(learning_rate=0.01)
+        model.compile(optimizer=opt, loss="categorical_crossentropy", metrics=['acc'])
 
-        batch = 64
+        batch = 32
         epochs = 1
         model.fit(X_train, y_train, batch, epochs)
         model.save(data_folder + sep + "predict_model.save")
