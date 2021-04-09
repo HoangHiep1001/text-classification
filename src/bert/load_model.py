@@ -17,4 +17,4 @@ phoBERT_cls.register_classification_head('new_task', num_classes=10)
 tokens = 'Học_sinh được nghỉ học bắt đầu từ tháng 3 do ảnh hưởng của dịch covid-19'
 token_idxs = phoBERT_cls.encode(tokens)
 logprobs = phoBERT_cls.predict('new_task', token_idxs)  # tensor([[-1.1050, -1.0672, -1.1245]], grad_fn=<LogSoftmaxBackward>)
-logprobs
+print(logprobs)

@@ -23,5 +23,5 @@ def cnn_model(vocab_size, embedding_dim, maxlen,weights,output_shape):
 
 
 def bi_lstm_model():
-    print("Ab")
+
 
