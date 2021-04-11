@@ -15,8 +15,7 @@ import csv
 
 
 def txtTokenizer(texts):
-    tokenizer = Tokenizer()
-    # fit the tokenizer on our text
+    tokenizer = Tokenizer(filters='!"#$%&()*+,-./:;<=>?@[]^`{|}~ ', num_words=20000)
     tokenizer.fit_on_texts(texts)
     word_index = tokenizer.word_index
     return tokenizer, word_index
@@ -43,10 +42,9 @@ def text_preprocess(text):
     text = unicodeConvert(text)
     text = nlp_utils.chuan_hoa_dau_cau_tieng_viet(text)
     text = nlp_utils.chuan_hoa_dau_tu_tieng_viet(text)
-    text = remove_stopword(text)
     text = ViTokenizer.tokenize(text)
     text = text.lower()
-    # xóa các ký tự không cần thiết
+    # text = remove_stopword(text)
     text = re.sub(r'[^\s\wáàảãạăắằẳẵặâấầẩẫậéèẻẽẹêếềểễệóòỏõọôốồổỗộơớờởỡợíìỉĩịúùủũụưứừửữựýỳỷỹỵđ_]', ' ', text)
     text = re.sub(r'\b\w{1,3}\b', '', text).strip()
     text = re.sub(r'\d+', ' ', text).strip()
@@ -84,13 +82,13 @@ def text_preprocessV2(sentences):
     text = [unicodeConvert(sentence) for sentence in sentences if sentence != '']
     text = [nlp_utils.chuan_hoa_dau_cau_tieng_viet(sentence) for sentence in text if sentence != '']
     text = [nlp_utils.chuan_hoa_dau_tu_tieng_viet(sentence) for sentence in text if sentence != '']
-    text = [remove_stopword(sentence) for sentence in text if sentence != '']
     text = [ViTokenizer.tokenize(sentence) for sentence in text if sentence != '']
     text = [sentence.lower() for sentence in text if sentence != '']
+    text = [remove_stopword(sentence) for sentence in text if sentence != '']
     # xóa các ký tự không cần thiết
     text = [re.sub(r'[^\s\wáàảãạăắằẳẵặâấầẩẫậéèẻẽẹêếềểễệóòỏõọôốồổỗộơớờởỡợíìỉĩịúùủũụưứừửữựýỳỷỹỵđ_]', ' ', sentence) for
             sentence in text if sentence != '']
-    text = [re.sub(r'\b\w{1,3}\b', '', sentence).strip() for sentence in text if sentence != '']
+    # text = [re.sub(r'\b\w{1,3}\b', '', sentence).strip() for sentence in text if sentence != '']
     text = [re.sub(r'\d+', ' ', sentence).strip() for sentence in text if sentence != '']
     text = [re.sub(r'\s+', ' ', sentence).strip() for sentence in text if sentence != '']
     text = [sentence.lower().strip().split() for sentence in text]
@@ -130,23 +128,24 @@ def dump_data(data_folder):
 
 if __name__ == '__main__':
     s = []
-    s.append('game')
+    # s.append('game')
     s.append('dien_anh')
     s.append('du_lich')
-    s.append('giao_duc')
-    s.append('kinh_doanh')
-    s.append('ngan_hang')
-    s.append('suc_khoe')
-    s.append('the_thao')
-    s.append('thoi_su_phap_luat')
-    for str1 in s:
-        path_in = '../../data/data-raw/' + str1 + sep + str1
-        path_rs = "../../data/data_process/" + str1 + sep + str1
-        data = read_file(path_in)
-        with codecs.open(path_rs, "w", encoding="utf8") as file:
-            for str in data:
-                str = text_preprocess(str)
-                if len(str) < 200:
-                    continue
-                file.write(str + "\n")
-        print("done " + path_rs)
+    # s.append('giao_duc')
+    # s.append('kinh_doanh')
+    # s.append('ngan_hang')
+    # s.append('suc_khoe')
+    # s.append('the_thao')
+    # s.append('thoi_su_phap_luat')
+    str = 'Du khách thích thú khám phá vườn cây ăn quả tại cồn Mỹ Phước. Đa dạng các mô hình du lịch cộng đồng Sóc Trăng có đường bờ biển dài 72km, tạo nên những bãi biển hoang sơ, xinh đẹp như Hồ Bể, Mỏ Ó. Bên cạnh đó, Sóc Trăng còn có dãy cù lao với những vườn cây ăn quả sum suê trải dài khoảng 60km trên dòng sông Hậu; những cánh rừng bần ngập nước với hệ sinh thái đa dạng và hệ thống sông, rạch chằng chịt'
+    print(text_preprocess(str))
+    # for str1 in s:
+    #     path_in = '../../data/data-raw/' + str1 + sep + str1 + '.txt'
+    #     path_rs = "../../data/data_process/" + str1 + sep + str1 + '.txt'
+    #     data = read_file(path_in)
+    #     with codecs.open(path_rs, "w", encoding="utf8") as file:
+    #         for str in data:
+    #             str = text_preprocess(str)
+    #             file.write(str + "\n")
+    #     print("done " + path_rs)
+

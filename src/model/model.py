@@ -21,7 +21,3 @@ def cnn_model(vocab_size, embedding_dim, maxlen,weights,output_shape):
     model.summary()
     return model
 
-
-def bi_lstm_model():
-
-
