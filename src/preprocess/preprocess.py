@@ -4,6 +4,7 @@ import pickle
 import re
 from os import listdir
 
+import gensim
 import pandas as pd
 from keras_preprocessing.sequence import pad_sequences
 from keras_preprocessing.text import Tokenizer
@@ -44,7 +45,7 @@ def text_preprocess(text):
     text = nlp_utils.chuan_hoa_dau_tu_tieng_viet(text)
     text = ViTokenizer.tokenize(text)
     text = text.lower()
-    # text = remove_stopword(text)
+    text = remove_stopword(text)
     # xóa các ký tự không cần thiết
     text = re.sub(r'[^\s\wáàảãạăắằẳẵặâấầẩẫậéèẻẽẹêếềểễệóòỏõọôốồổỗộơớờởỡợíìỉĩịúùủũụưứừửữựýỳỷỹỵđ_]', ' ', text)
     text = re.sub(r'\b\w{1,3}\b', '', text).strip()
@@ -64,7 +65,7 @@ def remove_stopword(text):
     pre_text = []
     words = text.split()
     for word in words:
-        if word not in list_stopwords and len(word) > 3:
+        if word not in list_stopwords and (word.__contains__('_') or len(word) < 7):
             pre_text.append(word)
         text2 = ' '.join(pre_text)
     return text2
@@ -74,7 +75,7 @@ sep = os.sep
 
 
 def preProcess(sentences):
-    text = [re.sub(r'([^\s\w]|_)+', '', sentence) for sentence in sentences if sentence != '']
+    text = [re.sub(r'([^\s\w]|)+', '', sentence) for sentence in sentences if sentence != '']
     text = [sentence.lower().strip().split() for sentence in text]
     return text
 
@@ -105,8 +106,8 @@ def loadData(data_folder):
             with open(data_folder + sep + folder + sep + file, 'r', encoding="utf-8") as f:
                 print("read file: " + data_folder + sep + folder + sep + file)
                 all_of_it = f.read()
-                sentences = all_of_it.split('.')
-                sentences = text_preprocessV2(sentences)
+                sentences = all_of_it.split('\n')
+                sentences = preProcess(sentences)
                 texts = texts + sentences
                 label = [folder for _ in sentences]
                 labels = labels + label
@@ -129,24 +130,27 @@ def dump_data(data_folder):
 
 if __name__ == '__main__':
     s = []
-    # s.append('game')
-    s.append('dien_anh')
-    s.append('du_lich')
+    content,label = loadData('../../data/data_process/')
+    word_model = gensim.models.Word2Vec(content, size=300, min_count=1, iter=10)
+    word_model.save("../../data/word_model.save")
+    word_model.wv.save_word2vec_format('../../data/test_w2v.txt', binary=False)
+    # print(content)
+    # s.append('dien_anh')
+    # s.append('du_lich')
     # s.append('giao_duc')
     # s.append('kinh_doanh')
     # s.append('ngan_hang')
     # s.append('suc_khoe')
     # s.append('the_thao')
     # s.append('thoi_su_phap_luat')
-    str = 'Du khách thích thú khám phá vườn cây ăn quả tại cồn Mỹ Phước. Đa dạng các mô hình du lịch cộng đồng Sóc Trăng có đường bờ biển dài 72km, tạo nên những bãi biển hoang sơ, xinh đẹp như Hồ Bể, Mỏ Ó. Bên cạnh đó, Sóc Trăng còn có dãy cù lao với những vườn cây ăn quả sum suê trải dài khoảng 60km trên dòng sông Hậu; những cánh rừng bần ngập nước với hệ sinh thái đa dạng và hệ thống sông, rạch chằng chịt'
-    print(text_preprocess(str))
     # for str1 in s:
     #     path_in = '../../data/data-raw/' + str1 + sep + str1 + '.txt'
     #     path_rs = "../../data/data_process/" + str1 + sep + str1 + '.txt'
     #     data = read_file(path_in)
-    #     with codecs.open(path_rs, "w", encoding="utf8") as file:
+    #     with codecs.open(path_rs, "w", encoding="utf-8") as file:
     #         for str in data:
     #             str = text_preprocess(str)
-    #             file.write(str + "\n")
+    #             if len(str.split()) >20:
+    #                 file.write(str + "\n")
     #     print("done " + path_rs)
 
