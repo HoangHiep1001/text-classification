@@ -1,66 +1,35 @@
-import pickle
-
-import keras
-from keras.models import Sequential, load_model
-from keras.layers import LSTM, Dense, Embedding
-import gensim
+import random
 import numpy as np
 from gensim.models import Word2Vec
 import os
-from sklearn.model_selection import train_test_split
-sep = os.sep
+from sklearn.decomposition import PCA
+from matplotlib import pyplot
+
+# path data
+pathdata = '../../data/data_process/'
+pathModelBin = '../../model/w2v.bin'
+pathModelTxt = '../../model/w2v.txt'
 
 
-def generate_model_w2v(data_folder):
-    file = open(data_folder + sep + "data.pkl", 'rb')
-    X,y,texts = pickle.load(file)
-    file.close()
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, shuffle=True)
-    # train Word2Vec model on our data
-    if not os.path.exists(data_folder + sep + "word_model.save"):
-        word_model = gensim.models.Word2Vec(texts, size=300, min_count=1, iter=10)
-        word_model.save(data_folder + sep + "word_model.save")
-    else:
-        word_model = gensim.models.Word2Vec.load(data_folder + sep + "word_model.save")
-    # split in train and test
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, shuffle=True)
-    # train Word2Vec model on our data
-    if not os.path.exists(data_folder + sep + "word_model.save"):
-        word_model = gensim.models.Word2Vec(texts, size=300, min_count=1, iter=10)
-        word_model.save(data_folder + sep + "word_model.save")
-    else:
-        word_model = gensim.models.Word2Vec.load(data_folder + sep + "word_model.save")
-
-    # check the most similar word to 'cơm'
-    print(word_model.wv.most_similar('công_điện'))
-
-    embedding_matrix = np.zeros((len(word_model.wv.vocab) + 1, 300))
-    for i, vec in enumerate(word_model.wv.vectors):
-        embedding_matrix[i] = vec
-
-    if not os.path.exists(data_folder + sep + "predict_model.save"):
-        # init layer
-        model = Sequential()
-        model.add(Embedding(len(word_model.wv.vocab) + 1, 300, input_length=X.shape[1], weights=[embedding_matrix],
-                            trainable=False))
-        model.add(LSTM(300, return_sequences=False))
-        model.add(Dense(y.shape[1], activation="softmax"))
-        model.summary()
-        opt = keras.optimizers.Adam(learning_rate=0.01)
-        model.compile(optimizer=opt, loss="categorical_crossentropy", metrics=['acc'])
-
-        batch = 32
-        epochs = 1
-        model.fit(X_train, y_train, batch, epochs)
-        model.save(data_folder + sep + "predict_model.save")
-    else:
-        model = load_model("../../data/data_dump/predict_model.save")
-
-    print(X_test[1])
-    result = model.predict(X_test[1])
-    print(result)
+def read_data():
+    content = []
+    label = []
+    list_folder = os.listdir(pathdata)
+    for filename in list_folder:
+        sents = open(pathdata + filename, 'r', encoding='utf-8').readlines()
+        for sent in sents:
+            content.append(sent)
+            label.append(filename)
+    return content, label
 
 
 if __name__ == '__main__':
-    path = "../../data/data_dump/"
-    generate_model_w2v(path)
+    content, label = read_data()
+    input_gensim = []
+
+    for str in content:
+        input_gensim.append(str.split())
+    word_model = Word2Vec(input_gensim, size=300, min_count=1, iter=10)
+    word_model.wv.save_word2vec_format(pathModelBin, fvocab=None, binary=True)
+    word_model.wv.save_word2vec_format(pathModelTxt, fvocab=None, binary=False)
+    word_model.wv.save("../../model/word.model")

@@ -45,6 +45,7 @@ def text_preprocess(text):
     text = ViTokenizer.tokenize(text)
     text = text.lower()
     # text = remove_stopword(text)
+    # xóa các ký tự không cần thiết
     text = re.sub(r'[^\s\wáàảãạăắằẳẵặâấầẩẫậéèẻẽẹêếềểễệóòỏõọôốồổỗộơớờởỡợíìỉĩịúùủũụưứừửữựýỳỷỹỵđ_]', ' ', text)
     text = re.sub(r'\b\w{1,3}\b', '', text).strip()
     text = re.sub(r'\d+', ' ', text).strip()
