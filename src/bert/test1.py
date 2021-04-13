@@ -20,6 +20,7 @@ def make_mask(batch_ids):
         batch_mask.append(mask)
     return torch.tensor(batch_mask)
 
+
 def dataloader_from_text(text_file=None, tokenizer=None, classes=[], savetodisk=None, loadformdisk=None, segment=False, max_len=256, batch_size=16, infer=False):
     ids_padded, masks, labels = [], [], []
     if loadformdisk == None:
