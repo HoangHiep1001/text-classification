@@ -1,11 +1,8 @@
 from os import listdir
 
 from sklearn.model_selection import train_test_split
-from vncorenlp import VnCoreNLP
 from tensorflow.keras.preprocessing.sequence import pad_sequences
-import random
 from tqdm import tqdm
-import pickle
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
 import torch
 import numpy as np
@@ -36,7 +33,7 @@ def read_data(path_raw, classes=[]):
     return content, labels
 
 
-def dataloader_from_text(texts=[], labels=[], tokenizer=None, classes=[], max_len=256, batch_size=16, infer=False):
+def dataloader_from_text(texts=[], labels=[], tokenizer=None, max_len=256, batch_size=16, infer=False):
     print(texts[0])
     print(labels[0])
     # text to id
@@ -114,7 +111,7 @@ class BERTClassifier(torch.nn.Module):
         )
         print("LOAD BERT PRETRAIN MODEL")
         self.bert_classifier = RobertaForSequenceClassification.from_pretrained(
-            "../../vinai/phobert-base/pytorch_model.bin",
+            "../../vinai/phobert-base/model.bin",
             config=bert_classifier_config
         )
 
@@ -130,11 +127,7 @@ class BERTClassifier(torch.nn.Module):
 class ClassifierTrainner():
     def __init__(self, bert_model, train_dataloader, valid_dataloader, epochs=10, cuda_device="cpu", save_dir=None):
 
-        if cuda_device == "cpu":
-            self.device == torch.device("cpu")
-        else:
-            self.device = torch.device('cuda:{}'.format(cuda_device))
-
+        self.device = torch.device('cuda:{}'.format(cuda_device))
         self.model = bert_model
         if save_dir is not None and os.path.exists(save_dir):
             print("Load weight from file:{}".format(save_dir))
@@ -310,12 +303,33 @@ if __name__ == '__main__':
 
     X_train, X_test, y_train, y_test = train_test_split(data, label, test_size=0.2, shuffle=True)
 
-    train_loader = dataloader_from_text(X_train,y_train, tokenizer=tokenizer, classes=classes, max_len=MAX_LEN,
+    train_loader = dataloader_from_text(X_train, y_train, tokenizer=tokenizer, max_len=MAX_LEN,
                                         batch_size=16)
-    val_loader = dataloader_from_text(X_test,y_test, tokenizer=tokenizer, classes=classes, max_len=256, batch_size=16)
+    val_loader = dataloader_from_text(X_test, y_test, tokenizer=tokenizer, max_len=256, batch_size=16)
     bert_classifier_model = BERTClassifier(len(classes))
     # train model
     bert_classifier_trainer = ClassifierTrainner(bert_model=bert_classifier_model, train_dataloader=train_loader,
                                                  valid_dataloader=val_loader, epochs=10, cuda_device="0")
     bert_classifier_trainer.train_classifier()
     print('===train done====')
+def predict(text, text_pipeline):
+    with torch.no_grad():
+        text = torch.tensor(text_pipeline(text))
+        output = model(text, torch.tensor([0]))
+        return output.argmax(1).item() + 1
+
+ex_text_str = "MEMPHIS, Tenn. – Four days ago, Jon Rahm was \
+    enduring the season’s worst weather conditions on Sunday at The \
+    Open on his way to a closing 75 at Royal Portrush, which \
+    considering the wind and the rain was a respectable showing. \
+    Thursday’s first round at the WGC-FedEx St. Jude Invitational \
+    was another story. With temperatures in the mid-80s and hardly any \
+    wind, the Spaniard was 13 strokes better in a flawless round. \
+    Thanks to his best putting performance on the PGA Tour, Rahm \
+    finished with an 8-under 62 for a three-stroke lead, which \
+    was even more impressive considering he’d never played the \
+    front nine at TPC Southwind."
+
+model = model.to("cpu")
+
+print("This is a %s news" %ag_news_label[predict(ex_text_str, text_pipeline)])
