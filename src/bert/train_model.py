@@ -11,8 +11,6 @@ from sklearn.model_selection import train_test_split
 from transformers import RobertaForSequenceClassification, RobertaConfig, AdamW, RobertaModel, AutoTokenizer
 
 from src.bert.load_data import read_data, make_mask
-from src.bert.test import dataloader_from_text
-
 sep = os.sep
 
 
@@ -62,7 +60,6 @@ class ClassifierTrainner():
 
         use_cuda = torch.cuda.is_available()
         self.device = torch.device("cuda" if use_cuda else "cpu")
-
         self.model = bert_model
         if save_dir is not None and os.path.exists(save_dir):
             print("Load weight from file:{}".format(save_dir))
@@ -232,7 +229,8 @@ if __name__ == '__main__':
     classes = ['dien_anh', 'du_lich']
     MAX_LEN = 256
     tokenizer = AutoTokenizer.from_pretrained("vinai/phobert-base", local_files_only=False)
-    #load and split data
+
+    # load and split data
     train_path = '../../data/test_data/'
     data, label = read_data(path_raw=train_path, classes=classes)
 
@@ -246,6 +244,6 @@ if __name__ == '__main__':
     bert_classifier_trainer = ClassifierTrainner(bert_model=bert_classifier_model, train_dataloader=train_loader,
                                                  valid_dataloader=val_loader, epochs=10)
     bert_classifier_trainer.train_classifier()
-    text = ['']
-    bert_classifier_trainer.predict_text(text=text,classes=classes,tokenizer=tokenizer,max_len=256)
+    # text = ['']
+    # bert_classifier_trainer.predict_text(text=text, classes=classes, tokenizer=tokenizer, max_len=256)
     print('===train done====')

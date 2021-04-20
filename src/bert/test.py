@@ -1,20 +1,16 @@
+import glob
+import os
+from datetime import datetime
 from os import listdir
 
-from sklearn.model_selection import train_test_split
-from vncorenlp import VnCoreNLP
-from tensorflow.keras.preprocessing.sequence import pad_sequences
-import random
-from tqdm import tqdm
-import pickle
-from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
-import torch
 import numpy as np
+import torch
 from sklearn.metrics import f1_score, accuracy_score
-import os
-from transformers import RobertaForSequenceClassification, RobertaConfig, AdamW, RobertaTokenizer, RobertaTokenizerFast, \
-    RobertaModel, AutoTokenizer
-from datetime import datetime
-import glob
+from sklearn.model_selection import train_test_split
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+from torch.utils.data import TensorDataset, DataLoader, SequentialSampler
+from tqdm import tqdm
+from transformers import RobertaForSequenceClassification, RobertaConfig, AdamW, RobertaModel, AutoTokenizer
 
 sep = os.sep
 
@@ -36,7 +32,7 @@ def read_data(path_raw, classes=[]):
     return content, labels
 
 
-def dataloader_from_text(texts=[], labels=[], tokenizer=None, classes=[], max_len=256, batch_size=16, infer=False):
+def dataloader_from_text(texts=[], labels=[], tokenizer=None, max_len=256, batch_size=16, infer=False):
     print(texts[0])
     print(labels[0])
     # text to id
