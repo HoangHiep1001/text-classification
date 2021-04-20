@@ -1,8 +1,11 @@
-
 from os import listdir
+
 from sklearn.model_selection import train_test_split
+from vncorenlp import VnCoreNLP
 from tensorflow.keras.preprocessing.sequence import pad_sequences
+import random
 from tqdm import tqdm
+import pickle
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
 import torch
 import numpy as np
@@ -33,7 +36,7 @@ def read_data(path_raw, classes=[]):
     return content, labels
 
 
-def dataloader_from_text(texts=[], labels=[], tokenizer=None, max_len=256, batch_size=16, infer=False):
+def dataloader_from_text(texts=[], labels=[], tokenizer=None, classes=[], max_len=256, batch_size=16, infer=False):
     print(texts[0])
     print(labels[0])
     # text to id
@@ -47,14 +50,13 @@ def dataloader_from_text(texts=[], labels=[], tokenizer=None, max_len=256, batch
     del ids
     print(ids_padded)
 
-    print("CONVERT TO TORCH TENSOR")
     ids_inputs = torch.tensor(ids_padded)
     del ids_padded
 
     if not infer:
         labels = torch.tensor(labels)
 
-    print("CREATE DATALOADER")
+    print("create dataloader")
     if infer:
         input_data = TensorDataset(ids_inputs)
     else:
@@ -104,14 +106,14 @@ class BERTClassifier(torch.nn.Module):
     def __init__(self, num_labels):
         super(BERTClassifier, self).__init__()
         bert_classifier_config = RobertaConfig.from_pretrained(
-            "../../vinai/phobert-base/config.json",
+            "../content/drive/MyDrive/project/data/vinai/phobert-base/config.json",
             from_tf=False,
             num_labels=num_labels,
             output_hidden_states=False,
         )
         print("LOAD BERT PRETRAIN MODEL")
         self.bert_classifier = RobertaForSequenceClassification.from_pretrained(
-            "../../vinai/phobert-base/model.bin",
+            "../content/drive/MyDrive/project/data/vinai/phobert-base/model.bin",
             config=bert_classifier_config
         )
 
@@ -127,7 +129,11 @@ class BERTClassifier(torch.nn.Module):
 class ClassifierTrainner():
     def __init__(self, bert_model, train_dataloader, valid_dataloader, epochs=10, cuda_device="cpu", save_dir=None):
 
-        self.device = torch.device('cuda:{}'.format(cuda_device))
+        if cuda_device == "cpu":
+            self.device == torch.device("cpu")
+        else:
+            self.device = torch.device('cuda:{}'.format(cuda_device))
+
         self.model = bert_model
         if save_dir is not None and os.path.exists(save_dir):
             print("Load weight from file:{}".format(save_dir))
@@ -157,7 +163,6 @@ class ClassifierTrainner():
         state_dict = torch.load(load_path, map_location=self.device)
         print(f'Model restored from <== {load_path}')
         self.model.load_state_dict(state_dict['model_state_dict'])
-
     @staticmethod
     def flat_accuracy(preds, labels):
         pred_flat = np.argmax(preds, axis=1).flatten()
@@ -259,7 +264,7 @@ class ClassifierTrainner():
 
             epoch_i_path = "{}/model_epoch{}.pt".format(self.save_dir, epoch_i)
             self.save_checkpoint(epoch_i_path)
-            os.remove("{}/model_epoch{}.pt".format(self.save_dir, epoch_i - 1))
+            os.remove("{}/model_epoch{}.pt".format(self.save_dir, epoch_i))
 
         print("Training complete!")
 
@@ -279,7 +284,9 @@ class ClassifierTrainner():
 
     def predict_text(self, text, classes, tokenizer, max_len=256):
         ids = tokenizer.encode(text)
-        ids_padded = pad_sequences(ids, maxlen=max_len, dtype="long", value=0, truncating="post", padding="post")
+        list_id = []
+        list_id.append(ids)
+        ids_padded = pad_sequences(list_id, maxlen=max_len, dtype="long", value=0, truncating="post", padding="post")
         mask = [int(token_id > 0) for token_id in ids_padded]
         input_ids = torch.tensor(ids_padded)
         intput_mask = torch.tensor(mask)
@@ -291,24 +298,3 @@ class ClassifierTrainner():
             logits = logits.detach().cpu().numpy()
             pred_flat = np.argmax(logits, axis=1).flatten()
             print("[PREDICT] {}:{}".format(classes[int(pred_flat)], text))
-
-
-if __name__ == '__main__':
-    classes = ['dien_anh', 'du_lich']
-    MAX_LEN = 256
-    tokenizer = AutoTokenizer.from_pretrained("vinai/phobert-base", local_files_only=False)
-
-    train_path = '../../data/data_process/'
-    data, label = read_data(path_raw=train_path, classes=classes)
-
-    X_train, X_test, y_train, y_test = train_test_split(data, label, test_size=0.2, shuffle=True)
-
-    train_loader = dataloader_from_text(X_train, y_train, tokenizer=tokenizer, max_len=MAX_LEN,
-                                        batch_size=16)
-    val_loader = dataloader_from_text(X_test, y_test, tokenizer=tokenizer, max_len=256, batch_size=16)
-    bert_classifier_model = BERTClassifier(len(classes))
-    # train model
-    bert_classifier_trainer = ClassifierTrainner(bert_model=bert_classifier_model, train_dataloader=train_loader,
-                                                 valid_dataloader=val_loader, epochs=10, cuda_device="0")
-    bert_classifier_trainer.train_classifier()
-    print('===train done====')
