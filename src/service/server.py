@@ -8,6 +8,8 @@ from keras.models import load_model
 from keras_preprocessing.sequence import pad_sequences
 from keras_preprocessing.text import Tokenizer
 
+from src.bert.predict import predict_text
+
 sep = os.sep
 
 
@@ -32,12 +34,12 @@ app = Flask(__name__)
 model_cnn = load_model("../../model/predict_model_cnn.h5")
 model_lstm = load_model("../../model/predict_model_bi_lstm.h5")
 model_bi_lstm = load_model("../../model/predict_model_bi_lstm.h5")
-model_bert = load_model("../../model/predict_model_bi_lstm.h5")
 content, labels = read_data('../../data/data_process')
 tokenize = Tokenizer(filters='!"#$%&()*+,-./:;<=>?@[]^`{|}~ ', num_words=30000)
 tokenize.fit_on_texts(content)
 content_sequences = tokenize.texts_to_sequences(content)
 pad_train_sequence = pad_sequences(content_sequences, maxlen=500, truncating='post', padding='post')
+
 classes = ['dien_anh', 'du_lich', 'suc_khoe', 'giao_duc', 'kinh_doanh', 'ngan_hang', 'the_thao', 'thoi_su_phap_luat']
 
 
@@ -48,8 +50,7 @@ def text_classification():
     print(data)
     input_text = data.get('text', '')
     type_model = data.get('type_model','')
-    text = []
-    text.append(input_text)
+    text = [input_text]
     test_seq = tokenize.texts_to_sequences(text)
     padding_test_seq = pad_sequences(test_seq, maxlen=500, truncating='post', padding='post')
     if type_model == 'cnn':
@@ -63,11 +64,10 @@ def text_classification():
         rs = model_bi_lstm.predict(padding_test_seq)
     elif type_model == 'bert':
         print("abc bert")
-        rs = model_bert.predict(padding_test_seq)
+        rs = predict_text(text=input_text)
 
-    print('text predict: ', input_text)
-    print('label predict: ', classes[np.argmax(rs)])
-    return classes[np.argmax(rs)]
+    print("[PREDICT] {}:{}".format(classes[int(rs)], text))
+    return classes[int(rs)]
 
 
 if __name__ == "__main__":

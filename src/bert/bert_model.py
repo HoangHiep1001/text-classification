@@ -1,17 +1,85 @@
-import torch
 import glob
 import os
 from datetime import datetime
+from os import listdir
 
 import numpy as np
 import torch
-from keras_preprocessing.sequence import pad_sequences
 from sklearn.metrics import f1_score, accuracy_score
 from sklearn.model_selection import train_test_split
-from transformers import RobertaForSequenceClassification, RobertaConfig, AdamW, RobertaModel, AutoTokenizer
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+from tqdm import tqdm
+from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
+import torch
+import numpy as np
+from sklearn.metrics import f1_score, accuracy_score
+import os
+from transformers import RobertaForSequenceClassification, RobertaConfig, AdamW, RobertaTokenizer, RobertaTokenizerFast, \
+    RobertaModel, AutoTokenizer, BertConfig
+from datetime import datetime
+import glob
 
-from src.bert.load_data import read_data, make_mask
 sep = os.sep
+
+
+def read_data(path_raw, classes=[]):
+    content = []
+    labels = []
+    for folder in listdir(path_raw):
+        for file in listdir(path_raw + sep + folder):
+            with open(path_raw + sep + folder + sep + file, 'r', encoding="utf-8") as f:
+                print("read file: " + path_raw + sep + folder + sep + file)
+                all_of_it = f.read()
+                sentences = all_of_it.split('\n')
+                for str in sentences:
+                    content.append(str)
+                for _ in sentences:
+                    labels.append(classes.index(folder))
+                del all_of_it, sentences
+    return content, labels
+
+
+def dataloader_from_text(texts=[], labels=[], tokenizer=None, max_len=256, batch_size=16, infer=False):
+    print(texts[0])
+    print(labels[0])
+    # text to id
+    ids = []
+    for text in tqdm(texts):
+        encoded_sent = tokenizer.encode(text)
+        ids.append(encoded_sent)
+    del texts
+    # padding sentences 256 length
+    ids_padded = pad_sequences(ids, maxlen=max_len, dtype="long", value=0, truncating="post", padding="post")
+    del ids
+    print(ids_padded)
+
+    print("CONVERT TO TORCH TENSOR")
+    ids_inputs = torch.tensor(ids_padded)
+    del ids_padded
+
+    if not infer:
+        labels = torch.tensor(labels)
+
+    print("CREATE DATALOADER")
+    if infer:
+        input_data = TensorDataset(ids_inputs)
+    else:
+        input_data = TensorDataset(ids_inputs, labels)
+    input_sampler = SequentialSampler(input_data)
+
+    data_loader = DataLoader(input_data, sampler=input_sampler, batch_size=batch_size)
+
+    print("len data_loader:", len(data_loader))
+    print("LOAD DATA ALL DONE")
+    return data_loader
+
+
+def make_mask(batch_ids):
+    batch_mask = []
+    for ids in batch_ids:
+        mask = [int(token_id > 0) for token_id in ids]
+        batch_mask.append(mask)
+    return torch.tensor(batch_mask)
 
 
 class ROBERTAClassifier(torch.nn.Module):
@@ -41,25 +109,31 @@ class ROBERTAClassifier(torch.nn.Module):
 class BERTClassifier(torch.nn.Module):
     def __init__(self, num_labels):
         super(BERTClassifier, self).__init__()
-        bert_classifier_config = RobertaConfig.from_pretrained("../../vinai/phobert-base/config.json", from_tf=False,
-                                                               num_labels=num_labels, output_hidden_states=False)
+        bert_classifier_config = BertConfig.from_pretrained(
+            "../../vinai/phobert-base/config.json",
+            from_tf=False,
+            num_labels=num_labels,
+            output_hidden_states=False,
+        )
         print("LOAD BERT PRETRAIN MODEL")
         self.bert_classifier = RobertaForSequenceClassification.from_pretrained(
-            "../../vinai/phobert-base/pytorch_model.bin", config=bert_classifier_config)
+            "../../vinai/phobert-base/model.bin",
+            config=bert_classifier_config
+        )
 
     def forward(self, input_ids, attention_mask, labels):
         output = self.bert_classifier(input_ids=input_ids,
                                       token_type_ids=None,
                                       attention_mask=attention_mask,
-                                      labels=labels)
+                                      labels=labels
+                                      )
         return output
 
 
 class ClassifierTrainner():
-    def __init__(self, bert_model, train_dataloader, valid_dataloader, epochs=10, save_dir=None):
+    def __init__(self, bert_model, train_dataloader, valid_dataloader, epochs=10, cuda_device="cpu", save_dir=None):
 
-        use_cuda = torch.cuda.is_available()
-        self.device = torch.device("cuda" if use_cuda else "cpu")
+        self.device = torch.device('cuda:{}'.format(cuda_device))
         self.model = bert_model
         if save_dir is not None and os.path.exists(save_dir):
             print("Load weight from file:{}".format(save_dir))
@@ -192,7 +266,7 @@ class ClassifierTrainner():
             epoch_i_path = "{}/model_epoch{}.pt".format(self.save_dir, epoch_i)
             self.save_checkpoint(epoch_i_path)
             os.remove("{}/model_epoch{}.pt".format(self.save_dir, epoch_i - 1))
-        torch.save(self.model.state_dict(), "../../data/model")
+
         print("Training complete!")
 
     def predict_dataloader(self, dataloader, classes, tokenizer):
@@ -230,20 +304,17 @@ if __name__ == '__main__':
     MAX_LEN = 256
     tokenizer = AutoTokenizer.from_pretrained("vinai/phobert-base", local_files_only=False)
 
-    # load and split data
-    train_path = '../../data/test_data/'
+    train_path = '../../data/data_process/'
     data, label = read_data(path_raw=train_path, classes=classes)
 
     X_train, X_test, y_train, y_test = train_test_split(data, label, test_size=0.2, shuffle=True)
 
-    train_loader = dataloader_from_text(X_train, y_train, tokenizer=tokenizer, max_len=MAX_LEN, batch_size=16)
-    val_loader = dataloader_from_text(X_test, y_test, tokenizer=tokenizer, max_len=MAX_LEN, batch_size=16)
-
+    train_loader = dataloader_from_text(X_train, y_train, tokenizer=tokenizer, max_len=MAX_LEN,
+                                        batch_size=16)
+    val_loader = dataloader_from_text(X_test, y_test, tokenizer=tokenizer, max_len=256, batch_size=16)
     bert_classifier_model = BERTClassifier(len(classes))
     # train model
     bert_classifier_trainer = ClassifierTrainner(bert_model=bert_classifier_model, train_dataloader=train_loader,
-                                                 valid_dataloader=val_loader, epochs=10)
+                                                 valid_dataloader=val_loader, epochs=10, cuda_device="0")
     bert_classifier_trainer.train_classifier()
-    # text = ['']
-    # bert_classifier_trainer.predict_text(text=text, classes=classes, tokenizer=tokenizer, max_len=256)
     print('===train done====')
