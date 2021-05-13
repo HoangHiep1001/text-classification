@@ -35,16 +35,11 @@ def train_model():
     #init model
     model = Sequential()
     model.add(Embedding(30000, 300, input_length=X.shape[1], weights=[embedding_matrix], trainable=False))
-    model.add(LSTM(300, activation='relu',dropout=0.4,recurrent_dropout=0.3))
-    model.add(Dense(512, activation='relu'))
-    model.add(Dense(512, activation='relu'))
-    model.add(Dense(256, activation='relu'))
-    model.add(Dense(256, activation='relu'))
+    model.add(LSTM(300, return_sequences=False))
+    model.add(Dropout(0.5))
     model.add(Dense(128, activation='relu'))
-    model.add(Dense(128, activation='relu'))
-    model.add(Dropout(0.2))
+    model.add(Dropout(0.1))
     model.add(Dense(y.shape[1], activation="softmax"))
-    model.summary()
     opt = keras.optimizers.Adam(learning_rate=0.00001)
     model.compile(optimizer=opt, loss="categorical_crossentropy", metrics=['acc'])
     early = EarlyStopping(monitor='val_loss')
@@ -52,7 +47,7 @@ def train_model():
     checkpoint = ModelCheckpoint(filepath, monitor='val_acc', verbose=1, save_best_only=True, mode='max')
     callbacks_list = [checkpoint, early]
     history = model.fit(X_train, y_train, validation_data=(X_val, y_val),
-                        batch_size=64, epochs=20, verbose=1, callbacks=callbacks_list)
+                        batch_size=32, epochs=10, verbose=1, callbacks=callbacks_list)
     model.save("../content/drive/MyDrive/project/data/model/model_predict/predict_model_bi_lstm.h5")
     plot_model_history(history)
 
