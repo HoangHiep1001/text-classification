@@ -32,6 +32,6 @@ def predict_text(text):
         return pred_flat
 
 
-# # bert_classifier_trainer.predict_text
-# text = 'mexico triệu đàn_ông bệnh bất_lực hiện triệu nam_giới mexico tuổi chứng bất_lực nguyên_nhân chủ_yếu căn_bệnh tim_mạch tiểu_đường chán_nản trầm_uất việc_làm chủ_tịch nghiên_cứu tình_dục mexico những chứng_bệnh mexico gia_tăng bệnh tiểu_đường kết_quả thăm_dò mới_đây nam_giới pháp tây_ban brazil mexico những bệnh bất_lực khủng_hoảng tinh_thần sức_khỏe suy_giảm việc_làm cảnh_báo chứng bất_lực trở_thành thách_thức đối_với y_tế cộng_đồng xã_hội gia_đình ảnh_hưởng trực_tiếp người_bệnh nguy_cơ tan_vỡ hạnh_phúc nhiều vợ_chồng thông_báo y_tế mexico chết bệnh ung_thư chết ung_thư phổi chết ung_thư tử_cung trường_hợp chết ung_thư tuyến tiền_liệt'
-# predict_text(text)
+if __name__ == '__main__':
+    text = 'mexico triệu đàn_ông bệnh bất_lực hiện triệu nam_giới mexico tuổi chứng bất_lực nguyên_nhân chủ_yếu căn_bệnh tim_mạch tiểu_đường chán_nản trầm_uất việc_làm chủ_tịch nghiên_cứu tình_dục mexico những chứng_bệnh mexico gia_tăng bệnh tiểu_đường kết_quả thăm_dò mới_đây nam_giới pháp tây_ban brazil mexico những bệnh bất_lực khủng_hoảng tinh_thần sức_khỏe suy_giảm việc_làm cảnh_báo chứng bất_lực trở_thành thách_thức đối_với y_tế cộng_đồng xã_hội gia_đình ảnh_hưởng trực_tiếp người_bệnh nguy_cơ tan_vỡ hạnh_phúc nhiều vợ_chồng thông_báo y_tế mexico chết bệnh ung_thư chết ung_thư phổi chết ung_thư tử_cung trường_hợp chết ung_thư tuyến tiền_liệt'
+    predict_text(text)

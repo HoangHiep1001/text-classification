@@ -21,6 +21,8 @@ def txtTokenizer(texts):
     word_index = tokenizer.word_index
     return tokenizer, word_index
 
+def removeHtml(text):
+    return re.sub(r'<[^>]*>', '', text)
 
 def read_file(filePath):
     list = []
@@ -29,10 +31,6 @@ def read_file(filePath):
         for i in a:
             list.append(i)
     return list
-
-
-def removeHtml(text):
-    return re.sub(r'<[^>]*>', '', text)
 
 
 def unicodeConvert(text):
@@ -120,8 +118,6 @@ def dump_data(data_folder):
     tokenizer, word_index = txtTokenizer(texts)
     X = tokenizer.texts_to_sequences(texts)
     X = pad_sequences(X)
-
-    # prepare the labels
     y = pd.get_dummies(labels)
     file = open("../../data/data_dump/data.pkl", 'wb')
     pickle.dump([X, y, texts], file)
@@ -130,27 +126,26 @@ def dump_data(data_folder):
 
 if __name__ == '__main__':
     s = []
-    content,label = loadData('../../data/data_process/')
-    word_model = gensim.models.Word2Vec(content, size=300, min_count=1, iter=10)
-    word_model.save("../../data/word_model.save")
-    word_model.wv.save_word2vec_format('../../data/test_w2v.txt', binary=False)
-    # print(content)
-    # s.append('dien_anh')
-    # s.append('du_lich')
-    # s.append('giao_duc')
-    # s.append('kinh_doanh')
-    # s.append('ngan_hang')
-    # s.append('suc_khoe')
-    # s.append('the_thao')
-    # s.append('thoi_su_phap_luat')
-    # for str1 in s:
-    #     path_in = '../../data/data-raw/' + str1 + sep + str1 + '.txt'
-    #     path_rs = "../../data/data_process/" + str1 + sep + str1 + '.txt'
-    #     data = read_file(path_in)
-    #     with codecs.open(path_rs, "w", encoding="utf-8") as file:
-    #         for str in data:
-    #             str = text_preprocess(str)
-    #             if len(str.split()) >20:
-    #                 file.write(str + "\n")
-    #     print("done " + path_rs)
+    # content,label = loadData('../../data/data_process/')
+    # word_model = gensim.models.Word2Vec(content, size=300, min_count=1, iter=10)
+    # word_model.save("../../data/word_model.save")
+    # word_model.wv.save_word2vec_format('../../data/test_w2v.txt', binary=False)
+    s.append('dien_anh')
+    s.append('du_lich')
+    s.append('giao_duc')
+    s.append('kinh_doanh')
+    s.append('ngan_hang')
+    s.append('suc_khoe')
+    s.append('the_thao')
+    s.append('thoi_su_phap_luat')
+    for str1 in s:
+        path_in = '../../data/data-raw/' + str1 + sep + str1 + '.txt'
+        path_rs = "../../data/data_process/" + str1 + sep + str1 + '.txt'
+        data = read_file(path_in)
+        with codecs.open(path_rs, "w", encoding="utf-8") as file:
+            for str in data:
+                str = text_preprocess(str)
+                if len(str.split()) >20:
+                    file.write(str + "\n")
+        print("done " + path_rs)
 

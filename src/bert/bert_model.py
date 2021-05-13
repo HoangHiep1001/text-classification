@@ -1,85 +1,16 @@
 import glob
 import os
 from datetime import datetime
-from os import listdir
 
 import numpy as np
 import torch
 from sklearn.metrics import f1_score, accuracy_score
 from sklearn.model_selection import train_test_split
-from tensorflow.keras.preprocessing.sequence import pad_sequences
-from tqdm import tqdm
-from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
-import torch
-import numpy as np
-from sklearn.metrics import f1_score, accuracy_score
-import os
-from transformers import RobertaForSequenceClassification, RobertaConfig, AdamW, RobertaTokenizer, RobertaTokenizerFast, \
-    RobertaModel, AutoTokenizer, BertConfig
-from datetime import datetime
-import glob
+from transformers import RobertaForSequenceClassification, AdamW, RobertaModel, AutoTokenizer, BertConfig
+
+from src.bert.load_data import make_mask, read_data, dataloader_from_text
 
 sep = os.sep
-
-
-def read_data(path_raw, classes=[]):
-    content = []
-    labels = []
-    for folder in listdir(path_raw):
-        for file in listdir(path_raw + sep + folder):
-            with open(path_raw + sep + folder + sep + file, 'r', encoding="utf-8") as f:
-                print("read file: " + path_raw + sep + folder + sep + file)
-                all_of_it = f.read()
-                sentences = all_of_it.split('\n')
-                for str in sentences:
-                    content.append(str)
-                for _ in sentences:
-                    labels.append(classes.index(folder))
-                del all_of_it, sentences
-    return content, labels
-
-
-def dataloader_from_text(texts=[], labels=[], tokenizer=None, max_len=256, batch_size=16, infer=False):
-    print(texts[0])
-    print(labels[0])
-    # text to id
-    ids = []
-    for text in tqdm(texts):
-        encoded_sent = tokenizer.encode(text)
-        ids.append(encoded_sent)
-    del texts
-    # padding sentences 256 length
-    ids_padded = pad_sequences(ids, maxlen=max_len, dtype="long", value=0, truncating="post", padding="post")
-    del ids
-    print(ids_padded)
-
-    print("CONVERT TO TORCH TENSOR")
-    ids_inputs = torch.tensor(ids_padded)
-    del ids_padded
-
-    if not infer:
-        labels = torch.tensor(labels)
-
-    print("CREATE DATALOADER")
-    if infer:
-        input_data = TensorDataset(ids_inputs)
-    else:
-        input_data = TensorDataset(ids_inputs, labels)
-    input_sampler = SequentialSampler(input_data)
-
-    data_loader = DataLoader(input_data, sampler=input_sampler, batch_size=batch_size)
-
-    print("len data_loader:", len(data_loader))
-    print("LOAD DATA ALL DONE")
-    return data_loader
-
-
-def make_mask(batch_ids):
-    batch_mask = []
-    for ids in batch_ids:
-        mask = [int(token_id > 0) for token_id in ids]
-        batch_mask.append(mask)
-    return torch.tensor(batch_mask)
 
 
 class ROBERTAClassifier(torch.nn.Module):
@@ -90,7 +21,7 @@ class ROBERTAClassifier(torch.nn.Module):
         else:
             self.roberta = RobertaModel.from_pretrained("vinai/phobert-base", local_files_only=False)
         self.d1 = torch.nn.Dropout(dropout_rate)
-        self.l1 = torch.nn.Linear(768, 64)
+        self.l1 = torch.nn.LSTM(768, 64, batch_first=True,bidirectional=True)
         self.bn1 = torch.nn.LayerNorm(64)
         self.d2 = torch.nn.Dropout(dropout_rate)
         self.l2 = torch.nn.Linear(64, num_labels)
@@ -115,7 +46,7 @@ class BERTClassifier(torch.nn.Module):
             num_labels=num_labels,
             output_hidden_states=False,
         )
-        print("LOAD BERT PRETRAIN MODEL")
+        print("====load bert model from trained====")
         self.bert_classifier = RobertaForSequenceClassification.from_pretrained(
             "../../vinai/phobert-base/model.bin",
             config=bert_classifier_config
@@ -152,7 +83,6 @@ class ClassifierTrainner():
         self.train_dataloader = train_dataloader
         self.valid_dataloader = valid_dataloader
         self.epochs = epochs
-        # self.batch_size = batch_size
 
     def save_checkpoint(self, save_path):
         state_dict = {'model_state_dict': self.model.state_dict()}
@@ -215,16 +145,14 @@ class ClassifierTrainner():
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(self.model.parameters(), 1.0)
                 optimizer.step()
-                if step % 100 == 0:
-                    print(
-                        "[TRAIN] Epoch {}/{} | Batch {}/{} | Train Loss={} | Train Acc={}".format(epoch_i, self.epochs,
-                                                                                                  step, len(
-                                self.train_dataloader), loss.item(), tmp_train_accuracy))
+                if step % 150 == 0:
+                    print("[train] epoch {}/{} | batch {}/{} | train_loss={} | train_acc={}".format(epoch_i, self.epochs, step,
+                    len(self.train_dataloader), loss.item(), tmp_train_accuracy))
 
             avg_train_loss = total_loss / len(self.train_dataloader)
-            print(" Train Accuracy: {0:.4f}".format(train_accuracy / nb_train_steps))
-            print(" Train F1 score: {0:.4f}".format(train_f1 / nb_train_steps))
-            print(" Train Loss: {0:.4f}".format(avg_train_loss))
+            print("train_acc: {0:.4f}".format(train_accuracy / nb_train_steps))
+            print("train_F1_score: {0:.4f}".format(train_f1 / nb_train_steps))
+            print("train_loss: {0:.4f}".format(avg_train_loss))
 
             print("Running Validation...")
             self.model.eval()
@@ -250,9 +178,9 @@ class ClassifierTrainner():
                     eval_f1 += tmp_eval_f1
                     nb_eval_steps += 1
 
-            print(" Valid Loss: {0:.4f}".format(eval_loss / nb_eval_steps))
-            print(" Valid Accuracy: {0:.4f}".format(eval_accuracy / nb_eval_steps))
-            print(" Valid F1 score: {0:.4f}".format(eval_f1 / nb_eval_steps))
+            print("val_loss: {0:.4f}".format(eval_loss / nb_eval_steps))
+            print("val_acc: {0:.4f}".format(eval_accuracy / nb_eval_steps))
+            print("val_f1_score: {0:.4f}".format(eval_f1 / nb_eval_steps))
 
             if best_valid_loss > eval_loss:
                 best_valid_loss = eval_loss
@@ -268,35 +196,6 @@ class ClassifierTrainner():
             os.remove("{}/model_epoch{}.pt".format(self.save_dir, epoch_i - 1))
 
         print("Training complete!")
-
-    def predict_dataloader(self, dataloader, classes, tokenizer):
-        for batch in dataloader:
-            batch = tuple(t.to(self.device) for t in batch)
-            b_input_ids, b_input_mask = batch
-            with torch.no_grad():
-                outputs = self.model(b_input_ids,
-                                     attention_mask=b_input_mask,
-                                     labels=None
-                                     )
-                logits = outputs
-                logits = logits.detach().cpu().numpy()
-                pred_flat = np.argmax(logits, axis=1).flatten()
-                print("[PREDICT] {}:{}".format(classes[int(pred_flat)], tokenizer.decode(b_input_ids)))
-
-    def predict_text(self, text, classes, tokenizer, max_len=256):
-        ids = tokenizer.encode(text)
-        ids_padded = pad_sequences(ids, maxlen=max_len, dtype="long", value=0, truncating="post", padding="post")
-        mask = [int(token_id > 0) for token_id in ids_padded]
-        input_ids = torch.tensor(ids_padded)
-        intput_mask = torch.tensor(mask)
-        with torch.no_grad():
-            logits = self.model(input_ids,
-                                attention_mask=intput_mask,
-                                labels=None
-                                )
-            logits = logits.detach().cpu().numpy()
-            pred_flat = np.argmax(logits, axis=1).flatten()
-            print("[PREDICT] {}:{}".format(classes[int(pred_flat)], text))
 
 
 if __name__ == '__main__':
