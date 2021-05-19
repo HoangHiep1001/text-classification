@@ -1,11 +1,7 @@
-import random
+import os
 
 import gensim
-import numpy as np
 from gensim.models import Word2Vec
-import os
-from sklearn.decomposition import PCA
-from matplotlib import pyplot
 
 # path data
 pathdata = '../../data/data_process/'
@@ -31,6 +27,6 @@ if __name__ == '__main__':
 
     for str in content:
         input_gensim.append(str.split())
-    word_model = gensim.models.Word2Vec(input_gensim, size=300, min_count=1, iter=10)
+    word_model = gensim.models.Word2Vec(input_gensim, size=300, min_count=1, iter=10, sample=0.00001,window=5,cbow_mean=1)
     word_model.save("../../data/word_model.save")
-    word_model.wv.save_word2vec_format('../../data/test_w2v.txt', binary=False)
+    word_model.wv.save_word2vec_format('../../data/w2v_model.txt', binary=False)

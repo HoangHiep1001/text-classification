@@ -64,5 +64,5 @@ def train_model(data_folder):
 
 
 if __name__ == '__main__':
-    path = "../../../data"
+    path = "../../data"
     train_model(path)

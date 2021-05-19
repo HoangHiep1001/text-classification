@@ -17,7 +17,7 @@ sep = os.sep
 
 
 def train_model():
-    file = open("/home/hiephm/PycharmProjects/text-classification/data.pkl", 'rb')
+    file = open("/data.pkl", 'rb')
     X, y = pickle.load(file)
     file.close()
     X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, shuffle=True)
