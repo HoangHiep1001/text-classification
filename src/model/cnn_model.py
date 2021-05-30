@@ -7,6 +7,7 @@ from keras.callbacks import *
 from keras.layers import Input, Dense, Embedding, Dropout, Bidirectional, LSTM
 from keras.layers.core import Flatten
 from sklearn.model_selection import train_test_split
+from tensorflow import keras
 from tensorflow.python.keras import Sequential
 from tensorflow.python.keras.layers import Conv1D, GlobalMaxPooling1D, MaxPooling1D
 from src.utils.plot_model import plot_model_history
@@ -44,7 +45,7 @@ def train_model(data_folder):
     model.add(Dropout(0.2))
     model.add(Dense(256, activation='relu'))
     model.add(Dense(128, activation='relu'))
-    model.add(Dense(y_train.shape[1], activation='sigmoid'))
+    model.add(Dense(y_train.shape[1], activation='softmax'))
     model.summary()
     opt = keras.optimizers.Adam(learning_rate=0.0001)
     model.compile(optimizer=opt, loss="categorical_crossentropy", metrics=['acc'])

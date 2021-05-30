@@ -40,8 +40,10 @@ def train_model():
     model.add(Dense(128, activation='relu'))
     model.add(Dropout(0.1))
     model.add(Dense(y.shape[1], activation="softmax"))
-    opt = keras.optimizers.Adam(learning_rate=0.00001)
+    opt = keras.optimizers.Adam(learning_rate=0.0001)
     model.compile(optimizer=opt, loss="categorical_crossentropy", metrics=['acc'])
+    from keras.utils.vis_utils import plot_model
+    plot_model(model, to_file='lstm_model.png', show_shapes=True, show_layer_names=True)
     early = EarlyStopping(monitor='val_loss')
     filepath = "../content/drive/MyDrive/project/data/data_dump/epochs:{epoch:03d}-val_acc:{val_acc:.3f}.hdf5"
     checkpoint = ModelCheckpoint(filepath, monitor='val_acc', verbose=1, save_best_only=True, mode='max')
