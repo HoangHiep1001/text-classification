@@ -16,10 +16,14 @@ import csv
 
 
 def txtTokenizer(texts):
-    tokenizer = Tokenizer(filters='!"#$%&()*+,-./:;<=>?@[]^`{|}~ ', num_words=20000)
+    tokenizer = Tokenizer(filters='!"#$%&()*+,-./:;<=>?@[]^`{|}~ ', num_words=30000, oov_token='OOV')
     tokenizer.fit_on_texts(texts)
     word_index = tokenizer.word_index
     return tokenizer, word_index
+
+
+def removeHtml(text):
+    return re.sub(r'<[^>]*>', '', text)
 
 
 def read_file(filePath):
@@ -29,10 +33,6 @@ def read_file(filePath):
         for i in a:
             list.append(i)
     return list
-
-
-def removeHtml(text):
-    return re.sub(r'<[^>]*>', '', text)
 
 
 def unicodeConvert(text):
@@ -65,7 +65,7 @@ def remove_stopword(text):
     pre_text = []
     words = text.split()
     for word in words:
-        if word not in list_stopwords and (word.__contains__('_') or len(word) < 7):
+        if (word not in list_stopwords) and (word.__contains__('_') or len(word) < 6):
             pre_text.append(word)
         text2 = ' '.join(pre_text)
     return text2
@@ -115,13 +115,31 @@ def loadData(data_folder):
     return texts, labels
 
 
+classes = ['dien_anh', 'du_lich', 'suc_khoe', 'giao_duc', 'kinh_doanh', 'ngan_hang', 'the_thao', 'thoi_su_phap_luat']
+
+
+def read_data(path_raw):
+    content = []
+    labels = []
+    for folder in listdir(path_raw):
+        for file in listdir(path_raw + sep + folder):
+            with open(path_raw + sep + folder + sep + file, 'r', encoding="utf-8") as f:
+                print("read file: " + path_raw + sep + folder + sep + file)
+                all_of_it = f.read()
+                sentences = all_of_it.split('\n')
+                for str in sentences:
+                    content.append(str)
+                for _ in sentences:
+                    labels.append(classes.index(folder))
+                del all_of_it, sentences
+    return content, labels
+
+
 def dump_data(data_folder):
     texts, labels = loadData(data_folder)
     tokenizer, word_index = txtTokenizer(texts)
     X = tokenizer.texts_to_sequences(texts)
     X = pad_sequences(X)
-
-    # prepare the labels
     y = pd.get_dummies(labels)
     file = open("../../data/data_dump/data.pkl", 'wb')
     pickle.dump([X, y, texts], file)
@@ -130,27 +148,25 @@ def dump_data(data_folder):
 
 if __name__ == '__main__':
     s = []
-    content,label = loadData('../../data/data_process/')
-    word_model = gensim.models.Word2Vec(content, size=300, min_count=1, iter=10)
-    word_model.save("../../data/word_model.save")
-    word_model.wv.save_word2vec_format('../../data/test_w2v.txt', binary=False)
-    # print(content)
-    # s.append('dien_anh')
-    # s.append('du_lich')
-    # s.append('giao_duc')
-    # s.append('kinh_doanh')
-    # s.append('ngan_hang')
-    # s.append('suc_khoe')
-    # s.append('the_thao')
-    # s.append('thoi_su_phap_luat')
-    # for str1 in s:
-    #     path_in = '../../data/data-raw/' + str1 + sep + str1 + '.txt'
-    #     path_rs = "../../data/data_process/" + str1 + sep + str1 + '.txt'
-    #     data = read_file(path_in)
-    #     with codecs.open(path_rs, "w", encoding="utf-8") as file:
-    #         for str in data:
-    #             str = text_preprocess(str)
-    #             if len(str.split()) >20:
-    #                 file.write(str + "\n")
-    #     print("done " + path_rs)
-
+    # content,label = loadData('../../data/data_process/')
+    # word_model = gensim.models.Word2Vec(content, size=300, min_count=1, iter=10)
+    # word_model.save("../../data/word_model.save")
+    # word_model.wv.save_word2vec_format('../../data/test_w2v.txt', binary=False)
+    s.append('dien_anh')
+    s.append('du_lich')
+    s.append('giao_duc')
+    s.append('kinh_doanh')
+    s.append('ngan_hang')
+    s.append('suc_khoe')
+    s.append('the_thao')
+    s.append('thoi_su_phap_luat')
+    for str1 in s:
+        path_in = '../../data/data-raw/' + str1 + sep + str1 + '.txt'
+        path_rs = "../../data/data_process/" + str1 + sep + str1 + '.txt'
+        data = read_file(path_in)
+        with codecs.open(path_rs, "w", encoding="utf-8") as file:
+            for str in data:
+                str = text_preprocess(str)
+                if len(str.split()) > 20:
+                    file.write(str + "\n")
+        print("done " + path_rs)

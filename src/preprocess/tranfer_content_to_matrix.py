@@ -24,7 +24,7 @@ def comment_embedding(content):
         indexword = i % lencmt
         if (max_seq - i < lencmt):
             break
-        if (words[indexword] in word_labels):
+        if words[indexword] in word_labels:
             matrix[i] = model_embedding[words[indexword]]
     matrix = np.array(matrix)
     return matrix
