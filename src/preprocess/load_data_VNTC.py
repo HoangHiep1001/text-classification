@@ -35,8 +35,8 @@ def read_data(path_raw, classes=[]):
 classes = ['Chinh tri Xa hoi', 'Doi song', 'Khoa hoc', 'Kinh doanh', 'Phap luat', 'Suc khoe', 'The gioi', 'The thao',
            'Van hoa', 'Vi tinh']
 
-train_path = '/home/hiephm/PycharmProjects/VNTC/Data/10Topics/Ver1.1/train'
+train_path = '/home/hiephm/PycharmProjects/VNTC/Data/10Topics/Ver1.1/test'
 data, label = read_data(path_raw=train_path, classes=classes)
-file = open("../../data/train.pkl", 'wb')
+file = open("../../data/test.pkl", 'wb')
 pickle.dump([data, label], file)
 file.close()

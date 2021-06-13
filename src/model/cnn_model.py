@@ -52,7 +52,6 @@ def train_model(data_folder):
     model.compile(optimizer=opt, loss="categorical_crossentropy", metrics=['acc'])
     from keras.utils.vis_utils import plot_model
     plot_model(model, to_file='cnn_model.png', show_shapes=True, show_layer_names=True)
-    print(model.summary())
     early = EarlyStopping(monitor='val_loss')
     filepath = "../content/drive/MyDrive/project/data/data_dump/epochs:{epoch:03d}-val_acc:{val_acc:.3f}.hdf5"
     checkpoint = ModelCheckpoint(filepath, monitor='val_acc', verbose=1, save_best_only=True, mode='max')
