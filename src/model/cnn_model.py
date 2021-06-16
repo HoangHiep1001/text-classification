@@ -21,10 +21,10 @@ def train_model(data_folder):
     file.close()
     X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, shuffle=True)
     word_model = gensim.models.Word2Vec.load("/home/hiephm/PycharmProjects/text-classification/w2v/word_model.save")
-    vocabulary_size = min(len(word_model.wv.vocab) + 1, 30000)
+    vocabulary_size = min(len(word_model.wv.vocab) + 1, 40000)
     embedding_matrix = np.zeros((vocabulary_size, 300))
     for i, vec in enumerate(word_model.wv.vectors):
-        if i >= 30000:
+        if i >= 40000:
             continue;
         try:
             embedding_matrix[i] = vec
@@ -32,7 +32,7 @@ def train_model(data_folder):
             embedding_matrix[i] = np.random.normal(0, np.sqrt(0.25), 300)
 
     model = Sequential()
-    model.add(Embedding(30000, 300, input_length=X.shape[1], weights=[embedding_matrix], trainable=False))
+    model.add(Embedding(vocabulary_size, 300, input_length=X.shape[1], weights=[embedding_matrix], trainable=False))
     model.add(Conv1D(filters=128, kernel_size=5, padding='valid', activation='relu', strides=1))
     model.add(Dropout(0.5))
     model.add(MaxPooling1D(pool_size=2))

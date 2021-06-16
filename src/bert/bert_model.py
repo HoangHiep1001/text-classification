@@ -20,26 +20,26 @@ class ROBERTAClassifier(torch.nn.Module):
             self.roberta = bert_model
         else:
             self.roberta = RobertaModel.from_pretrained("vinai/phobert-base", local_files_only=False)
-        self.d1 = torch.nn.Dropout(dropout_rate)
-        self.l1 = torch.nn.LSTM(768, 64, batch_first=True,bidirectional=True)
-        self.bn1 = torch.nn.LayerNorm(64)
-        self.d2 = torch.nn.Dropout(dropout_rate)
-        self.l2 = torch.nn.Linear(64, num_labels)
+        self.drop1 = torch.nn.Dropout(dropout_rate)
+        self.lstm = torch.nn.LSTM(768, 64, batch_first=True, bidirectional=True)
+        self.norm = torch.nn.LayerNorm(64)
+        self.drop2 = torch.nn.Dropout(dropout_rate)
+        self.linear = torch.nn.Linear(64, num_labels)
 
     def forward(self, input_ids, attention_mask):
         _, x = self.roberta(input_ids=input_ids, attention_mask=attention_mask)
-        x = self.d1(x)
-        x = self.l1(x)
-        x = self.bn1(x)
+        x = self.drop1(x)
+        x = self.lstm(x)
+        x = self.norm(x)
         x = torch.nn.Tanh()(x)
-        x = self.d2(x)
-        x = self.l2(x)
+        x = self.drop2(x)
+        x = self.linear(x)
         return x
 
 
-class BERTClassifier(torch.nn.Module):
+class PhoBertClassifier(torch.nn.Module):
     def __init__(self, num_labels):
-        super(BERTClassifier, self).__init__()
+        super(PhoBertClassifier, self).__init__()
         bert_classifier_config = BertConfig.from_pretrained(
             "../../vinai/phobert-base/config.json",
             from_tf=False,
@@ -47,6 +47,7 @@ class BERTClassifier(torch.nn.Module):
             output_hidden_states=False,
         )
         print("====load bert model from trained====")
+        # using roberta classification
         self.bert_classifier = RobertaForSequenceClassification.from_pretrained(
             "../../vinai/phobert-base/model.bin",
             config=bert_classifier_config
@@ -61,25 +62,13 @@ class BERTClassifier(torch.nn.Module):
         return output
 
 
-class ClassifierTrainner():
-    def __init__(self, bert_model, train_dataloader, valid_dataloader, epochs=10, cuda_device="cpu", save_dir=None):
+class Train():
+    def __init__(self, bert_model, train_dataloader, valid_dataloader, epochs=10, cuda_device="cpu"):
 
         self.device = torch.device('cuda:{}'.format(cuda_device))
         self.model = bert_model
-        if save_dir is not None and os.path.exists(save_dir):
-            print("Load weight from file:{}".format(save_dir))
-            self.save_dir = save_dir
-            epcho_checkpoint_path = glob.glob("{}/model_epoch*".format(self.save_dir))
-            if len(epcho_checkpoint_path) == 0:
-                print("No checkpoint found in: {}\nCheck save_dir...".format(self.save_dir))
-            else:
-                self.load_checkpoint(epcho_checkpoint_path)
-                print("Restore weight successful from: {}".format(epcho_checkpoint_path))
-        else:
-            self.save_dir = datetime.now().strftime("%d-%m-%Y_%H-%M-%S")
-            os.makedirs(self.save_dir)
-            print("Training new model, save to: {}".format(self.save_dir))
-
+        self.save_dir = datetime.now().strftime("%d-%m-%Y_%H-%M-%S")
+        os.makedirs(self.save_dir)
         self.train_dataloader = train_dataloader
         self.valid_dataloader = valid_dataloader
         self.epochs = epochs
@@ -91,7 +80,7 @@ class ClassifierTrainner():
 
     def load_checkpoint(self, load_path):
         state_dict = torch.load(load_path, map_location=self.device)
-        print(f'Model restored from <== {load_path}')
+        print(f'Model load from <== {load_path}')
         self.model.load_state_dict(state_dict['model_state_dict'])
 
     @staticmethod
@@ -113,7 +102,7 @@ class ClassifierTrainner():
 
         for epoch_i in range(0, self.epochs):
             print('======== Epoch {:} / {:} ========'.format(epoch_i + 1, self.epochs))
-            print('Training...')
+            print('Training model!!!')
 
             total_loss = 0
             self.model.train()
@@ -128,10 +117,7 @@ class ClassifierTrainner():
                 b_labels = batch[1].to(self.device)
 
                 self.model.zero_grad()
-                outputs = self.model(b_input_ids,
-                                     attention_mask=b_input_mask,
-                                     labels=b_labels
-                                     )
+                outputs = self.model(b_input_ids, attention_mask=b_input_mask, labels=b_labels)
                 loss = outputs[0]
                 total_loss += loss.item()
 
@@ -146,41 +132,43 @@ class ClassifierTrainner():
                 torch.nn.utils.clip_grad_norm_(self.model.parameters(), 1.0)
                 optimizer.step()
                 if step % 150 == 0:
-                    print("[train] epoch {}/{} | batch {}/{} | train_loss={} | train_acc={}".format(epoch_i, self.epochs, step,
-                    len(self.train_dataloader), loss.item(), tmp_train_accuracy))
+                    print(
+                        "[train] epoch {}/{} | batch {}/{} | train_loss={} | train_acc={}".format(epoch_i, self.epochs,
+                                                                                                  step,
+                                                                                                  len(
+                                                                                                      self.train_dataloader),
+                                                                                                  loss.item(),
+                                                                                                  tmp_train_accuracy))
 
             avg_train_loss = total_loss / len(self.train_dataloader)
-            print("train_acc: {0:.4f}".format(train_accuracy / nb_train_steps))
-            print("train_F1_score: {0:.4f}".format(train_f1 / nb_train_steps))
-            print("train_loss: {0:.4f}".format(avg_train_loss))
+            print("train_acc: {0:.3f}".format(train_accuracy / nb_train_steps))
+            print("train_F1_score: {0:.3f}".format(train_f1 / nb_train_steps))
+            print("train_loss: {0:.3f}".format(avg_train_loss))
 
-            print("Running Validation...")
+            print("Validation Model ...")
             self.model.eval()
             eval_loss, eval_accuracy = 0, 0
             nb_eval_steps, nb_eval_examples = 0, 0
             eval_f1 = 0
 
             for batch in self.valid_dataloader:
-                b_input_mask = make_mask(batch[0]).to(self.device)
+                val_mask = make_mask(batch[0]).to(self.device)
                 batch = tuple(t.to(self.device) for t in batch)
-                b_input_ids, b_labels = batch
+                val_ids, val_labels = batch
                 with torch.no_grad():
-                    outputs = self.model(b_input_ids,
-                                         attention_mask=b_input_mask,
-                                         labels=b_labels
-                                         )
+                    outputs = self.model(val_ids, attention_mask=val_mask, labels=val_labels)
                     tmp_eval_loss, logits = outputs[0], outputs[1]
                     logits = logits.detach().cpu().numpy()
-                    label_ids = b_labels.cpu().numpy()
+                    label_ids = val_labels.cpu().numpy()
                     tmp_eval_accuracy, tmp_eval_f1 = self.flat_accuracy(logits, label_ids)
                     eval_accuracy += tmp_eval_accuracy
                     eval_loss += tmp_eval_loss
                     eval_f1 += tmp_eval_f1
                     nb_eval_steps += 1
 
-            print("val_loss: {0:.4f}".format(eval_loss / nb_eval_steps))
-            print("val_acc: {0:.4f}".format(eval_accuracy / nb_eval_steps))
-            print("val_f1_score: {0:.4f}".format(eval_f1 / nb_eval_steps))
+            print("val_loss: {0:.3f}".format(eval_loss / nb_eval_steps))
+            print("val_acc: {0:.3f}".format(eval_accuracy / nb_eval_steps))
+            print("val_f1_score: {0:.3f}".format(eval_f1 / nb_eval_steps))
 
             if best_valid_loss > eval_loss:
                 best_valid_loss = eval_loss
@@ -195,25 +183,24 @@ class ClassifierTrainner():
             self.save_checkpoint(epoch_i_path)
             os.remove("{}/model_epoch{}.pt".format(self.save_dir, epoch_i - 1))
 
-        print("Training complete!")
-
 
 if __name__ == '__main__':
-    classes = ['dien_anh', 'du_lich']
+    classes = ['dien_anh', 'du_lich', 'suc_khoe', 'giao_duc', 'kinh_doanh', 'ngan_hang', 'the_thao',
+               'thoi_su_phap_luat']
     MAX_LEN = 256
     tokenizer = AutoTokenizer.from_pretrained("vinai/phobert-base", local_files_only=False)
 
     train_path = '../../data/data_process/'
     data, label = read_data(path_raw=train_path, classes=classes)
 
-    X_train, X_test, y_train, y_test = train_test_split(data, label, test_size=0.2, shuffle=True)
-
+    X_train, X_val, y_train, y_val = train_test_split(data, label, test_size=0.2, shuffle=True)
+    X_train, X_test, y_train, y_test = train_test_split(X_train, y_train, test_size=0.1, shuffle=True)
     train_loader = dataloader_from_text(X_train, y_train, tokenizer=tokenizer, max_len=MAX_LEN,
                                         batch_size=16)
-    val_loader = dataloader_from_text(X_test, y_test, tokenizer=tokenizer, max_len=256, batch_size=16)
-    bert_classifier_model = BERTClassifier(len(classes))
+    val_loader = dataloader_from_text(X_val, y_val, tokenizer=tokenizer, max_len=256, batch_size=16)
+    bert_classifier_model = PhoBertClassifier(len(classes))
     # train model
-    bert_classifier_trainer = ClassifierTrainner(bert_model=bert_classifier_model, train_dataloader=train_loader,
-                                                 valid_dataloader=val_loader, epochs=10, cuda_device="0")
+    bert_classifier_trainer = Train(bert_model=bert_classifier_model, train_dataloader=train_loader,
+                                    valid_dataloader=val_loader, epochs=10, cuda_device="0")
     bert_classifier_trainer.train_classifier()
     print('===train done====')
